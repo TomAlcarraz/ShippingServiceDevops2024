@@ -20,6 +20,8 @@ jobs:
       id: assume-role
       uses: aws-actions/configure-aws-credentials@v2
       with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         role-to-assume: arn:aws:iam::ACCOUNT_ID:role/LabRole
         aws-region: ${{ env.AWS_REGION }}
         role-session-name: GitHubActions
@@ -33,5 +35,8 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
+        # Construir la imagen usando el Dockerfile
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+
+        # Empujar la imagen a Amazon ECR
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
