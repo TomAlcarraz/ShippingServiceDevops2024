@@ -5,8 +5,8 @@ on:
     branches: [ "main" ]
 
 env:
-  AWS_REGION: us-east-1                          # Cambia esto a tu región (us-east-1, us-west-2, etc.)
-  ECR_REPOSITORY: repo-devops-obligatorio        # Nombre de tu repositorio en Amazon ECR
+  AWS_REGION: us-east-1                          # Cambia esto a tu región
+  ECR_REPOSITORY: repo-devops-obligatorio        # Nombre del repositorio en Amazon ECR
 
 jobs:
   build-and-push:
@@ -16,24 +16,22 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v3
+    - name: Assume LabRole
+      id: assume-role
+      uses: aws-actions/configure-aws-credentials@v2
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+        role-to-assume: arn:aws:iam::ACCOUNT_ID:role/LabRole
+        aws-region: ${{ env.AWS_REGION }}
+        role-session-name: GitHubActions
 
     - name: Log in to Amazon ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+      uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, tag, and push Docker image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # Construir la imagen usando el Dockerfile
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-
-        # Empujar la imagen a Amazon ECR
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
